@@ -1,0 +1,15 @@
+galaxy_info:
+  role_name: certbot_certs
+  author: Martin Kuba
+  description: Creates a Let's Encrypt TLS certificate and its private key using the certbot tool.
+  company: CESNET
+  license: Apache
+  min_ansible_version: 2.7
+  platforms:
+   - name: Debian
+     versions:
+     - buster
+  galaxy_tags:
+    - "system"
+    - "web"
+dependencies: []
