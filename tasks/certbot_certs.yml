@@ -1,0 +1,65 @@
+- name:  "Ansible 2.7+ required"
+  assert:
+    that:
+      - ansible_version is defined
+      - ansible_version.full is version_compare('2.7', '>=')
+    msg: "Required Ansible version is 2.7+ with include_tasks supporting tags"
+
+- name: "Check whether TLS cert for {{ certbot_hostname }} exists"
+  stat:
+    path: "/etc/letsencrypt/live/{{ certbot_hostname }}/cert.pem"
+  register: p
+
+- name: "create TLS cert"
+  when: not p.stat.exists
+  include_tasks:
+    file: certbot_certs_get.yml
+    apply:
+      tags:
+        - certbot_certs
+
+- name: "find certbot dirs"
+  find:
+    paths:
+      - /etc/letsencrypt/live
+      - /etc/letsencrypt/archive
+    file_type: directory
+    recurse: yes
+  register: certbotdirs
+
+- name: "set access to top-level certbot dirs for ssl-cert group"
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: ssl-cert
+    mode: 0750
+  loop:
+    - /etc/letsencrypt/live
+    - /etc/letsencrypt/archive
+
+- name: "set access to second-level certbot dirs for ssl-cert group"
+  file:
+    path: "{{ item.path }}"
+    owner: root
+    group: ssl-cert
+    mode: 0750
+  loop: "{{ certbotdirs.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: "find certbot private keys"
+  find:
+    paths: /etc/letsencrypt/archive
+    patterns: 'priv*.pem'
+    recurse: yes
+  register: privkeys
+
+- name: "set access to certbot private keys for ssl-cert group"
+  file:
+    path: "{{ item.path }}"
+    owner: root
+    group: ssl-cert
+    mode: 0640
+  loop: "{{ privkeys.files }}"
+  loop_control:
+    label: "{{ item.path }}"

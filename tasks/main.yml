@@ -1,0 +1,8 @@
+---
+
+- import_tasks: certbot_certs.yml
+  tags:
+    - certbot_certs
+
+- name: "flush handlers"
+  meta: flush_handlers
