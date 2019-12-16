@@ -1,22 +1,16 @@
-- name:  "Ansible 2.7+ required"
-  assert:
-    that:
-      - ansible_version is defined
-      - ansible_version.full is version_compare('2.7', '>=')
-    msg: "Required Ansible version is 2.7+ with include_tasks supporting tags"
+- name: "install certbot"
+  apt:
+    name:
+      - ssl-cert
+      - certbot
+    state: present
 
-- name: "Check whether TLS cert for {{ certbot_hostname }} exists"
-  stat:
-    path: "/etc/letsencrypt/live/{{ certbot_hostname }}/cert.pem"
-  register: p
-
-- name: "create TLS cert"
-  when: not p.stat.exists
-  include_tasks:
-    file: certbot_certs_get.yml
-    apply:
-      tags:
-        - certbot_certs
+- name: "get cert for {{ certbot_hostname }}"
+  command: >-
+    certbot certonly --standalone --domain {{ certbot_hostname }}
+    --non-interactive --quiet --agree-tos {{ certbot_account_options }}
+  args:
+    creates: "/etc/letsencrypt/live/{{ certbot_hostname }}/cert.pem"
 
 - name: "find certbot dirs"
   find:
