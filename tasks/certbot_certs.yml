@@ -5,12 +5,15 @@
       - certbot
     state: present
 
+- debug:
+    msg: "--domain {{ certbot_hostname }} --cert-name {{ certbot_certname }}"
+
 - name: "get cert for {{ certbot_hostname }}"
   command: >-
-    certbot certonly --standalone --domain {{ certbot_hostname }}
+    certbot certonly --standalone --domain {{ certbot_hostname }} --cert-name {{ certbot_certname }}
     --non-interactive --quiet --agree-tos {{ certbot_account_options }}
   args:
-    creates: "/etc/letsencrypt/live/{{ certbot_hostname }}/cert.pem"
+    creates: "/etc/letsencrypt/live/{{ certbot_certname }}/cert.pem"
 
 - name: "find certbot dirs"
   find:
