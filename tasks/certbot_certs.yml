@@ -5,8 +5,19 @@
       - certbot
     state: present
 
-- debug:
-    msg: "--domain {{ certbot_hostname }} --cert-name {{ certbot_certname }}"
+- name: "get package facts"
+  package_facts:
+
+- name: "is apache2 installed?"
+  set_fact:
+    apache2_installed: "{{ 'apache2' in ansible_facts.packages }}"
+
+- name: "ensure apache is not running"
+  service:
+    name: apache2
+    state: stopped
+  when: apache2_installed
+  register: apache2_stopped
 
 - name: "get cert for {{ certbot_hostname }}"
   command: >-
@@ -14,6 +25,12 @@
     --non-interactive --quiet --agree-tos {{ certbot_account_options }}
   args:
     creates: "/etc/letsencrypt/live/{{ certbot_certname }}/cert.pem"
+
+- name: "restart apache if it was running originally"
+  service:
+    name: apache2
+    state: started
+  when: apache2_stopped.changed
 
 - name: "find certbot dirs"
   find:
@@ -60,3 +77,19 @@
   loop: "{{ privkeys.files }}"
   loop_control:
     label: "{{ item.path }}"
+
+- name: "create renewal hook for stopping apache"
+  copy:
+    dest: /etc/letsencrypt/renewal-hooks/pre/apache.sh
+    content: |
+      #!/bin/bash
+      service apache2 stop
+    mode: 0755
+
+- name: "create renewal hook for starting apache"
+  copy:
+    dest: /etc/letsencrypt/renewal-hooks/post/apache.sh
+    content: |
+      #!/bin/bash
+      service apache2 start
+    mode: 0755

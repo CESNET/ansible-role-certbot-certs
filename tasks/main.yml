@@ -1,6 +1,16 @@
 ---
 
-- import_tasks: certbot_certs.yml
+- name: "check whether cert exists"
+  stat:
+    path: "/etc/letsencrypt/live/{{ certbot_certname }}/cert.pem"
+  register: p
+
+- include_tasks:
+    file: certbot_certs.yml
+    apply:
+      tags:
+        - certbot_certs
+  when: not p.stat.exists
   tags:
     - certbot_certs
 
