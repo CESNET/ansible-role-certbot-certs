@@ -21,7 +21,8 @@ Role Variables
 * **certbot_hostname** - the host name for the certificate, default is {{ inventory_hostname }}, i.e. the hostname used for accessing the machine by Ansible
 * **certbot_certname** - name used for the live and archive directories where files are stored, default is {{ certbot_hostname }}
 * **certbot_account_options** - default is "--register-unsafely-without-email", replace with "--email &lt;your email>" for registering properly
-
+* **certbot_prehook** - file with prehook, default is apache_prehook.sh stopping Apache web server
+* **certbot_posthook** - file with posthook, default is apache_posthook.sh starting Apache web server
 Simple Example Playbook
 ----------------
 

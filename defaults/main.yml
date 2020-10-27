@@ -3,3 +3,5 @@
 certbot_hostname: "{{ inventory_hostname }}"
 certbot_certname: "{{ certbot_hostname }}"
 certbot_account_options: "--register-unsafely-without-email"
+certbot_prehook: "apache_prehook.sh"
+certbot_posthook: "apache_posthook.sh"

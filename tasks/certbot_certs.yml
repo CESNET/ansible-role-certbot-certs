@@ -63,18 +63,14 @@
   loop_control:
     label: "{{ item.path }}"
 
-- name: "create renewal hook for stopping apache"
+- name: "create renewal pre-hook {{ certbot_prehook }}"
   copy:
-    dest: /etc/letsencrypt/renewal-hooks/pre/apache.sh
-    content: |
-      #!/bin/bash
-      service apache2 stop
+    dest: "/etc/letsencrypt/renewal-hooks/pre/{{ certbot_prehook }}"
+    src: "{{ certbot_prehook }}"
     mode: 0755
 
-- name: "create renewal hook for starting apache"
+- name: "create renewal post-hook {{ certbot_posthook }}"
   copy:
-    dest: /etc/letsencrypt/renewal-hooks/post/apache.sh
-    content: |
-      #!/bin/bash
-      service apache2 start
+    dest: "/etc/letsencrypt/renewal-hooks/post/{{ certbot_posthook }}"
+    src: "{{ certbot_posthook }}"
     mode: 0755
