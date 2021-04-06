@@ -1,9 +1,110 @@
-- name: "install certbot"
+- name: "install ssl-cert and snapd"
   apt:
     name:
       - ssl-cert
-      - certbot
+      - snapd
     state: present
+
+- name: "remove OS packages"
+  apt:
+    name:
+      - certbot
+      - python3-certbot
+    state: absent
+
+- name: "install snap core"
+  snap:
+    name: core
+    state: present
+
+- name: "install certbot from snap"
+  snap:
+    name: certbot
+    classic: yes
+    state: present
+
+- name: "create symlink to certbot snap"
+  file:
+    state: link
+    src: /snap/bin/certbot
+    dest: /usr/bin/certbot
+
+- name: "create logrotate for certbot"
+  copy:
+    dest: /etc/logrotate.d/certbot
+    content: |
+      /var/log/letsencrypt/*.log {
+          rotate 12
+          weekly
+          compress
+          missingok
+      }
+
+- name: "create systemd service for certbot renewal"
+  copy:
+    dest: /lib/systemd/system/certbot.service
+    content: |
+      [Unit]
+      Description=Certbot
+      Documentation=https://letsencrypt.readthedocs.io/en/latest/
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/certbot -q renew
+      PrivateTmp=true
+
+- name: "create systemd timer for certbot renewal"
+  copy:
+    dest: /lib/systemd/system/certbot.timer
+    content: |
+      [Unit]
+      Description=Run certbot twice daily
+      [Timer]
+      OnCalendar=*-*-* 00,12:00:00
+      RandomizedDelaySec=43200
+      Persistent=true
+      [Install]
+      WantedBy=timers.target
+
+- name: "reload systemd"
+  systemd:
+    daemon_reload: yes
+
+- name: "start certbot timer"
+  systemd:
+    name: certbot.timer
+    enabled: yes
+    state: started
+
+- name: "create /etc/letsencrypt"
+  file:
+    state: directory
+    path: /etc/letsencrypt
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "create /etc/letsencrypt/cli.ini"
+  copy:
+    force: no
+    dest: /etc/letsencrypt/cli.ini
+    content: |
+      # created by Ansible
+      max-log-backups = 0
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "configure ECC for certs"
+  lineinfile:
+    path: /etc/letsencrypt/cli.ini
+    regexp: 'key-type'
+    line: "key-type = ecdsa"
+
+- name: "configure P-384 cipher for certs"
+  lineinfile:
+    path: /etc/letsencrypt/cli.ini
+    regexp: 'elliptic-curve'
+    line: "elliptic-curve = secp384r1"
 
 - name: "check whether cert {{ certbot_certname }} exists"
   stat:
