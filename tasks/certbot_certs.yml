@@ -72,6 +72,7 @@
 - name: "start certbot timer"
   systemd:
     name: certbot.timer
+    masked: no
     enabled: yes
     state: started
 
