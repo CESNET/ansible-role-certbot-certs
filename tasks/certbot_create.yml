@@ -14,8 +14,16 @@
 
 - name: "get cert for {{ certbot_hostname }}"
   command: >-
-    certbot certonly --standalone --domain {{ certbot_hostname }} --cert-name {{ certbot_certname }}
-    --non-interactive --quiet --agree-tos {{ certbot_account_options }}
+    certbot certonly --standalone
+    --domain {{ certbot_hostname }}
+    {% for i in certbot_alt_hostnames %}
+      --domain {{ i }}
+    {% endfor %}
+    --cert-name {{ certbot_certname }}
+    --non-interactive
+    --quiet
+    --agree-tos
+    {{ certbot_account_options }}
   args:
     creates: "/etc/letsencrypt/live/{{ certbot_certname }}/cert.pem"
 

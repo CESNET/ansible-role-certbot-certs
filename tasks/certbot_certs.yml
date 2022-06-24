@@ -112,7 +112,8 @@
     path: "/etc/letsencrypt/live/{{ certbot_certname }}/cert.pem"
   register: p
 
-- include_tasks:
+- name: "create cert"
+  include_tasks:
     file: certbot_create.yml
     apply:
       tags:
@@ -166,12 +167,14 @@
     label: "{{ item.path }}"
 
 - name: "create renewal pre-hook {{ certbot_prehook | basename }}"
+  when: certbot_install_hooks
   copy:
     dest: "/etc/letsencrypt/renewal-hooks/pre/{{ certbot_prehook | basename }}"
     src: "{{ certbot_prehook }}"
     mode: 0755
 
 - name: "create renewal post-hook {{ certbot_posthook | basename }}"
+  when: certbot_install_hooks
   copy:
     dest: "/etc/letsencrypt/renewal-hooks/post/{{ certbot_posthook | basename }}"
     src: "{{ certbot_posthook }}"

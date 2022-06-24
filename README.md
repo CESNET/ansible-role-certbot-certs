@@ -18,11 +18,14 @@ and 0640 for files, so that PostgresSQL database server can use the files.
 Role Variables
 --------------
 
-* **certbot_hostname** - the host name for the certificate, default is {{ inventory_hostname }}, i.e. the hostname used for accessing the machine by Ansible
-* **certbot_certname** - name used for the live and archive directories where files are stored, default is {{ certbot_hostname }}
-* **certbot_account_options** - default is "--register-unsafely-without-email", replace with "--email &lt;your email>" for registering properly
+* **certbot_hostname** - the host name for the certificate, default is `{{ inventory_hostname }}`, i.e. the hostname used for accessing the machine by Ansible
+* **certbot_alt_hostnames** - list of alternative DNS names to be included in the certificate, default is an empty list
+* **certbot_certname** - name used for the live and archive directories where files are stored, default is `{{ certbot_hostname }}`
+* **certbot_account_options** - default is `--register-unsafely-without-email`, replace with `--email &lt;your email>` for registering properly
 * **certbot_prehook** - file with prehook, default is apache_prehook.sh stopping Apache web server
 * **certbot_posthook** - file with posthook, default is apache_posthook.sh starting Apache web server
+* **certbot_install_hooks** - whether to install prehook and posthook, default is yes
+
 Simple Example Playbook
 ----------------
 
@@ -41,8 +44,14 @@ Example of More Complex Playbook
         - "some-random-name.my-cloud.org"
       vars: 
         certbot_hostname: www.mynicename.net
+        certbot_alt_hostnames:
+          - www1.mynicename.net
+          - www2.mynicename.net
         certbot_certname: mycert
         certbot_account_options: --email john@gmail.com
+        certbot_install_hooks: yes
+        certbot_prehook: files/certbot/myprehook.sh
+        certbot_posthook: files/certbot/myposthook.sh
       roles:
          - cesnet.certbot_certs
 ```
