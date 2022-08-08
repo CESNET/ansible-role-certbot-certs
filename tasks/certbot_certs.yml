@@ -1,8 +1,9 @@
-- name: "install ssl-cert and snapd"
+- name: "install ssl-cert, snapd and python3-cryptography"
   apt:
     name:
       - ssl-cert
       - snapd
+      - python3-cryptography
     state: present
 
 - name: "remove OS packages"
@@ -112,13 +113,30 @@
     path: "/etc/letsencrypt/live/{{ certbot_certname }}/cert.pem"
   register: p
 
+- name: "get DNS names from certificate"
+  when: p.stat.exists
+  community.crypto.x509_certificate_info:
+    path: "/etc/letsencrypt/live/{{ certbot_certname }}/cert.pem"
+  register: certinfo
+
+- name: "DNS names in cert {{ certbot_certname }}"
+  when: p.stat.exists
+  debug:
+    msg: "{{ certinfo.subject_alt_name }}"
+
+- name: "check all DNS names presence in cert {{ certbot_certname }}"
+  when: p.stat.exists and certinfo.subject_alt_name is defined
+  loop: "{{ [ certbot_hostname ] + certbot_alt_hostnames }}"
+  set_fact:
+    all_dns_names_included: "{{ all_dns_names_included|default('yes'|bool) and ( 'DNS:'+item in certinfo.subject_alt_name )}}"
+
 - name: "create cert"
+  when: (not p.stat.exists) or (not all_dns_names_included)
   include_tasks:
     file: certbot_create.yml
     apply:
       tags:
         - certbot_certs
-  when: not p.stat.exists
 
 - name: "find certbot dirs"
   find:
