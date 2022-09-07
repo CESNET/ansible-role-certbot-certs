@@ -20,7 +20,7 @@
   register: docker_perun_apache_container
 
 - name: "stop perun_apache container"
-  when: docker_perun_apache_container.exists and docker_perun_apache_container.container.State.Running
+  when: docker_installed and docker_perun_apache_container.exists and docker_perun_apache_container.container.State.Running
   docker_container:
     name: perun_apache
     state: stopped
@@ -46,7 +46,7 @@
   when: apache2_stopped.changed
 
 - name: "restart perun_apache container if it was running originally"
-  when: docker_perun_apache_container.exists and docker_perun_apache_stopped.changed
+  when: docker_installed and docker_perun_apache_container.exists and docker_perun_apache_stopped.changed
   docker_container:
     name: perun_apache
     state: started
