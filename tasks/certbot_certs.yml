@@ -24,12 +24,6 @@
     classic: yes
     state: present
 
-- name: "create symlink to certbot snap"
-  file:
-    state: link
-    src: /snap/bin/certbot
-    dest: /usr/bin/certbot
-
 - name: "create logrotate for certbot"
   copy:
     dest: /etc/logrotate.d/certbot
@@ -41,41 +35,45 @@
           missingok
       }
 
-- name: "create systemd service for certbot renewal"
-  copy:
-    dest: /lib/systemd/system/certbot.service
-    content: |
-      [Unit]
-      Description=Certbot
-      Documentation=https://letsencrypt.readthedocs.io/en/latest/
-      [Service]
-      Type=oneshot
-      ExecStart=/usr/bin/certbot -q renew
-      PrivateTmp=true
+# FIXME - temporary tasks to clean up our previously used custom timers/service
+- name: "check if custom certbot timer exists"
+  stat:
+    path: /lib/systemd/system/certbot.timer
+  register: custom_timer_file
 
-- name: "create systemd timer for certbot renewal"
-  copy:
-    dest: /lib/systemd/system/certbot.timer
-    content: |
-      [Unit]
-      Description=Run certbot twice daily
-      [Timer]
-      OnCalendar=*-*-* 00,12:00:00
-      RandomizedDelaySec=43200
-      Persistent=true
-      [Install]
-      WantedBy=timers.target
+- name: "stop and disable custom certbot timer if it exists"
+  systemd:
+    name: certbot.timer
+    state: stopped
+    enabled: no
+  when: custom_timer_file.stat.exists
+  failed_when: false
 
-- name: "reload systemd"
+- name: "remove old custom systemd service and timer files"
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /lib/systemd/system/certbot.service
+    - /lib/systemd/system/certbot.timer
+
+- name: "reload systemd to clear removed units"
   systemd:
     daemon_reload: yes
 
-- name: "start certbot timer"
+# FIXME - end of temporary tasks
+
+- name: "ensure snap certbot renewal timer is started and enabled"
   systemd:
-    name: certbot.timer
-    masked: no
-    enabled: yes
+    name: snap.certbot.renew.timer
     state: started
+    enabled: yes
+
+- name: "ensure /usr/bin/certbot symlink exists for manual use"
+  file:
+    src: /snap/bin/certbot
+    dest: /usr/bin/certbot
+    state: link
 
 - name: "create /etc/letsencrypt"
   file:

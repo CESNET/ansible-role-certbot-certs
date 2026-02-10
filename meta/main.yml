@@ -4,12 +4,16 @@ galaxy_info:
   description: Creates a Let's Encrypt TLS certificate and its private key using the certbot tool.
   company: CESNET
   license: Apache
-  min_ansible_version: 2.9
+  min_ansible_version: 2.16
   platforms:
-   - name: Debian
-     versions:
-     - buster
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+        - trixie
   galaxy_tags:
     - "system"
     - "web"
+    - "tls"
+    - "certbot"
 dependencies: []
