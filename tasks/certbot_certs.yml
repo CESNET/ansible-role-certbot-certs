@@ -122,14 +122,16 @@
   debug:
     msg: "{{ certinfo.subject_alt_name }}"
 
-- name: "check all DNS names presence in cert {{ certbot_certname }}"
+- name: "Compare requested DNS domains with certificate domains"
   when: p.stat.exists and certinfo.subject_alt_name is defined
-  loop: "{{ [ certbot_hostname ] + certbot_alt_hostnames }}"
+  vars:
+    requested_domains: "{{ [ certbot_hostname ] + certbot_alt_hostnames }}"
+    current_domains: "{{ certinfo.subject_alt_name | map('regex_replace', '^DNS:', '') | list }}"
   set_fact:
-    all_dns_names_included: "{{ all_dns_names_included|default('yes'|bool) and ( 'DNS:'+item in certinfo.subject_alt_name )}}"
+    cert_domains_match: "{{ requested_domains | sort == current_domains | sort }}"
 
 - name: "create cert"
-  when: (not p.stat.exists) or (not all_dns_names_included)
+  when: (not p.stat.exists) or (not cert_domains_match | default(false) | bool)
   include_tasks:
     file: certbot_create.yml
     apply:
