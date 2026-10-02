@@ -27,6 +27,7 @@
   register: docker_perun_apache_stopped
 
 - name: "get cert from certbot"
+  when: certbot_for_geant is not defined
   command: >-
     certbot certonly --standalone
     --domain {{ certbot_hostname }}
@@ -38,6 +39,23 @@
     --quiet
     --agree-tos
     {{ certbot_account_options }}
+
+- name: "get cert from certbot for GEANT"
+  when: certbot_for_geant
+  command: >-
+      certbot certonly 
+      -vv
+      --manual 
+      --preferred-challenges dns
+      --domain "*.test.eduteams.org"
+      --cert-name {{ certbot_certname }}
+      --non-interactive
+      --manual-auth-hook /bin/true
+      --agree-tos
+      --server https://acme-v02.harica.gr/acme/954515fe-9628-43c3-9c67-594613f6e92d/directory
+      --eab-kid  
+      --eab-hmac-key 
+      {{ certbot_account_options }}
 
 - name: "restart apache if it was running originally"
   service:
