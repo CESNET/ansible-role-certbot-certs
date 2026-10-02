@@ -27,6 +27,7 @@
   register: docker_perun_apache_stopped
 
 - name: "get cert from certbot"
+  when: not (certbot_for_geant | default(false) | bool)  
   command: >-
     certbot certonly --standalone
     --domain {{ certbot_hostname }}
@@ -38,6 +39,22 @@
     --quiet
     --agree-tos
     {{ certbot_account_options }}
+
+- name: "get cert from certbot for GEANT"
+  when: certbot_for_geant | default(false) | bool
+  command: >-
+      certbot certonly 
+      --manual 
+      --preferred-challenges dns
+      --domain "*.{{ perun_instance_hostname | regex_replace('^[^.]+\\.', '') }}"
+      --cert-name {{ certbot_certname }}
+      --non-interactive
+      --manual-auth-hook /bin/true
+      --agree-tos
+      --server https://acme-v02.harica.gr/acme/954515fe-9628-43c3-9c67-594613f6e92d/directory
+      --eab-kid  {{ certbot_eab_kid }}
+      --eab-hmac-key {{ certbot_eab_hmac_key }}
+      {{ certbot_account_options }}
 
 - name: "restart apache if it was running originally"
   service:

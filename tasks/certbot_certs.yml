@@ -122,10 +122,13 @@
   debug:
     msg: "{{ certinfo.subject_alt_name }}"
 
-- name: "Compare requested DNS domains with certificate domains"
+- name: "compare requested DNS domains with certificate domains"
   when: p.stat.exists and certinfo.subject_alt_name is defined
   vars:
-    requested_domains: "{{ [ certbot_hostname ] + certbot_alt_hostnames }}"
+    requested_domains: >-
+     {{ ['*.' ~ (perun_instance_hostname | regex_replace('^[^.]+\\.', ''))]
+     if certbot_for_geant | default(false) | bool
+     else [certbot_hostname] + certbot_alt_hostnames }}
     current_domains: "{{ certinfo.subject_alt_name | map('regex_replace', '^DNS:', '') | list }}"
   set_fact:
     cert_domains_match: "{{ requested_domains | sort == current_domains | sort }}"
