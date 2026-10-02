@@ -29,7 +29,7 @@
 - name: "get cert from certbot"
   command: >-
     certbot certonly --standalone
-    --domain {{ certbot_hostname }}
+    --domain "*.{{ perun_instance_hostname | regex_replace('^[^.]+[.]', '') }}"
     {% for i in certbot_alt_hostnames %}
       --domain {{ i }}
     {% endfor %}
